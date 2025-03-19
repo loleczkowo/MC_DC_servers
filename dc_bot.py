@@ -13,8 +13,7 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 SERVERS = {
-    "server1": "/home/youruser/minecraft_servers/server1",
-    "server2": "/home/youruser/minecraft_servers/server2"
+    "Hania_I_pinkie": "/home/loleczkowo/mcdc/servers/Hania_I_pinkie",
 }
 
 UPDATE_CHAN_FILE = os.path.join(DIR, "update_chan.json")
