@@ -70,8 +70,10 @@ def player_number(server_name):
         with open("/tmp/mc_output.txt", "r") as file:
             lines = file.readlines()
 
+        print(lines)
         matches = re.findall(
             r"There are (\d+) of a max of \d+ players online:", lines)
+        print(matches)
         return int(matches[-1]) if matches else 0
     except Exception as e:
         print(f"Error retrieving player count for {server_name}: {e}")
