@@ -46,12 +46,16 @@ async def on_ready():
 
 
 def is_server_running(server_name):
+    # Check if the screen session exists
     result = subprocess.run(
-        f"pgrep -f 'screen -dmS {server_name}'",
+        f"screen -ls | grep -E '\\.{server_name}[[:space:]]'", 
         shell=True, capture_output=True, text=True
     )
-    print(result, server_name)
-    return result.returncode == 0
+
+    # Debugging output
+    print(f"Check for server {server_name}: returncode={result.returncode}, stdout='{result.stdout.strip()}'")
+
+    return bool(result.stdout.strip())
 
 
 def player_number(server_name):
@@ -126,7 +130,7 @@ async def update():
                         "time": time.time() + 60 * 5,
                         "func": lambda: stop_server_def(server)
                     }
-                min = ceil(to_run[del_format]["time"]/60)
+                min = (ceil(to_run[del_format]["time"]-time.time())/60)
                 formated_time = f"`{min}`~ MINUTE"+"S"*(min != 1)
                 status = f"🟡 **CLOSING IN {formated_time}** (`0 players`)"
             else:
