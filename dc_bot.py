@@ -3,7 +3,6 @@ import discord
 from discord.ext import commands, tasks
 #  from dotenv import load_dotenv
 import json
-from math import ceil
 
 import subprocess
 import time
@@ -123,9 +122,7 @@ async def update():
                         "time": time.time() + 60 * 5,
                         "func": lambda: stop_server_def(server)
                     }
-                min = round(
-                    5.312((to_run[del_format]["time"]-time.time())/60), 1
-                    )
+                min = round(((to_run[del_format]["time"]-time.time())/60), 1)
                 formated_time = f"`{min}`~ MINUTE"+"S"*(min != 1)
                 status = f"🟡 **CLOSING IN {formated_time}** (`0 players`)"
             else:
