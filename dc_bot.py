@@ -80,6 +80,16 @@ def player_number(server_name):
         return
 
 
+def get_port(server):
+    server_properties = f"{SERVERS[server]}/server.properties"
+    with open(server_properties, "r") as file:
+        for line in file:
+            if line.startswith("server-port="):
+                current_port = line.strip().split("=")[1]
+                return current_port
+    return -1
+
+
 @tasks.loop(seconds=30)
 async def run_torun():
     global to_run
@@ -94,7 +104,7 @@ async def run_torun():
     to_run = new_to_run
 
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=60)
 async def update():
     global guild_update_chan
     global to_run
@@ -112,7 +122,7 @@ async def update():
             if num == 0:
                 if del_format not in to_run:
                     to_run[del_format] = {
-                        "time": time.time() + 60 * 3,
+                        "time": time.time() + 60 * 5,
                         "func": lambda: stop_server_def(server)
                     }
                 min = ceil(to_run[del_format]["time"]/60)
@@ -124,7 +134,12 @@ async def update():
                     del to_run[del_format]
         else:
             status = "🔴 OFF"
-        embed.add_field(name=server, value=status, inline=False)
+        port = get_port(server)
+        embed.add_field(
+            name=f"**{server}** `everythingthatcounts.ddns.net:{port}`",
+            value=status,
+            inline=True
+            )
 
     new_guild_update_chan = {}
     for guild in bot.guilds:
@@ -187,6 +202,27 @@ async def set_update_channel(ctx: commands.Context, channel_id):
         }
     update_chan_file(guild_update_chan)
     await ctx.send(f"New channel for updates <#{channel_id}>")
+
+
+@bot.command(name="port")
+async def update_port(ctx, server, new_port):
+    if server not in SERVERS:
+        await ctx.send(f"Server `{server}` not found")
+
+    if not new_port.isdigit():
+        await ctx.send(f"The new port needs to be digits not `{new_port}`")
+
+    server_properties = f"{SERVERS[server]}/server.properties"
+
+    with open(server_properties, "r") as file:
+        lines = file.readlines()
+
+    with open(server_properties, "w") as file:
+        for line in lines:
+            if line.startswith("server-port="):
+                file.write(f"server-port={new_port}\n")
+            else:
+                file.write(line)
 
 
 @bot.command(name="start")
