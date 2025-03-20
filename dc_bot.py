@@ -48,12 +48,9 @@ async def on_ready():
 def is_server_running(server_name):
     # Check if the screen session exists
     result = subprocess.run(
-        f"screen -ls | grep -E '\\.{server_name}[[:space:]]'", 
+        f"screen -ls | grep -E '\\.{server_name}[[:space:]]'",
         shell=True, capture_output=True, text=True
     )
-
-    # Debugging output
-    print(f"Check for server {server_name}: returncode={result.returncode}, stdout='{result.stdout.strip()}'")
 
     return bool(result.stdout.strip())
 
@@ -276,6 +273,8 @@ async def stop_server(ctx: commands.Context, name):
                        f"within {timeout} seconds"))
                 return
 
+        subprocess.run(f"screen -S {name} -X quit", shell=True)
+
         await ctx.send(f"Server `{name}` stopped")
     else:
         await ctx.send(f"Server `{name}` not found")
@@ -296,6 +295,7 @@ def stop_server_def(name, wait=False):
             if elapsed >= timeout:
                 print((f"Warning: Server `{name}` did not shut down"
                        f"within {timeout} seconds"))
+    subprocess.run(f"screen -S {name} -X quit", shell=True)
 
 
 bot.run(token)
