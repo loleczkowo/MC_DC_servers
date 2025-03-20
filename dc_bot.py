@@ -271,7 +271,6 @@ async def stop_server(ctx: commands.Context, name):
             if elapsed >= timeout:
                 print((f"Warning: Server `{name}` did not shut down"
                        f"within {timeout} seconds"))
-                return
 
         subprocess.run(f"screen -S {name} -X quit", shell=True)
 
