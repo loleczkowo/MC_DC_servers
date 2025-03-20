@@ -47,10 +47,10 @@ async def on_ready():
 
 def is_server_running(server_name):
     result = subprocess.run(
-        f"screen -ls | grep {server_name}",
+        f"pgrep -f 'screen -dmS {server_name}'",
         shell=True, capture_output=True, text=True
-        )
-    return server_name in result.stdout
+    )
+    return result.returncode == 0
 
 
 def player_number(server_name):
@@ -77,7 +77,7 @@ def player_number(server_name):
         return 0
     except Exception as e:
         print(f"Error retrieving player count for {server_name}: {e}")
-        return
+        return 0
 
 
 def get_port(server):
@@ -93,10 +93,10 @@ def get_port(server):
 @tasks.loop(seconds=30)
 async def run_torun():
     global to_run
-    if to_run == {}:
+    if not to_run:
         return
     new_to_run = {}
-    for name, data in to_run:
+    for name, data in to_run.items():
         if data["time"] < time.time():
             data["func"]()
         else:
@@ -111,7 +111,7 @@ async def update():
     guild_update_chan_keys = guild_update_chan.keys()
 
     embed = discord.Embed(
-        title="Updated Server Status",
+        title="Servers Status",
         color=discord.Color.green()
     )
 
@@ -175,7 +175,7 @@ async def set_update_channel(ctx: commands.Context, channel_id):
         await ctx.send(f"Wrong channel id, `{channel_id}` does not exists")
         return
     embed = discord.Embed(
-        title="Updated Server Status (loading)",
+        title="Servers Status (loading)",
         color=discord.Color.red()
     )
     send_message = await channel.send(embed=embed)
@@ -211,6 +211,7 @@ async def update_port(ctx, server, new_port):
 
     if not new_port.isdigit():
         await ctx.send(f"The new port needs to be digits not `{new_port}`")
+    new_port = int(new_port)
 
     server_properties = f"{SERVERS[server]}/server.properties"
 
@@ -223,6 +224,13 @@ async def update_port(ctx, server, new_port):
                 file.write(f"server-port={new_port}\n")
             else:
                 file.write(line)
+    await ctx.send(f"Server `{server}` is now on port `{new_port}` set")
+
+    if is_server_running(server):
+        await ctx.send(f"Server `{server}` Is still on, reseting")
+        stop_server_def(server, True)
+        time.sleep(1)
+        await start_server(ctx, server)
 
 
 @bot.command(name="start")
@@ -233,10 +241,10 @@ async def start_server(ctx: commands.Context, name):
             return
 
         server_path = SERVERS[name]
-        command = (f"screen -dmS {name} java -Xmx2G -Xms2G -jar "
-                   f"{server_path}/server.jar nogui")
-        os.chdir(server_path)
-        subprocess.run(command, shell=True)
+        command = (f"screen -dmS {name} bash -c 'cd {server_path} && "
+                   f"java -Xmx2G -Xms2G -jar minecraft_server.jar --nogui'")
+        subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
         await ctx.send(f"Server `{name}` started")
     else:
         await ctx.send(f"Server `{name}` not found")
@@ -268,11 +276,21 @@ async def stop_server(ctx: commands.Context, name):
         await ctx.send(f"Server `{name}` not found")
 
 
-def stop_server_def(name):
+def stop_server_def(name, wait=False):
     if not is_server_running(name):
         return
     command = f"screen -S {name} -X stuff 'stop\n'"
     subprocess.run(command, shell=True)
+
+    if wait:
+        timeout = 30
+        elapsed = 0
+        while is_server_running(name):
+            time.sleep(1)
+            elapsed += 1
+            if elapsed >= timeout:
+                print((f"Warning: Server `{name}` did not shut down"
+                       f"within {timeout} seconds"))
 
 
 bot.run(token)
