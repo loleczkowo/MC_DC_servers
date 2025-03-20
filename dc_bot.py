@@ -50,6 +50,7 @@ def is_server_running(server_name):
         f"pgrep -f 'screen -dmS {server_name}'",
         shell=True, capture_output=True, text=True
     )
+    print(result, server_name)
     return result.returncode == 0
 
 
