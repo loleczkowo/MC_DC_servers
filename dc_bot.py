@@ -69,10 +69,8 @@ def player_number(server_name):
 
         with open("/tmp/mc_output.txt", "r") as file:
             lines = file.readlines()
-
-        print(lines)
         matches = re.findall(
-            r"There are (\d+) of a max of \d+ players online:", lines)
+            r"There are (\d+) of a max of \d+ players online:", "".join(lines))
         print(matches)
         return int(matches[-1]) if matches else 0
     except Exception as e:
@@ -125,7 +123,9 @@ async def update():
                         "time": time.time() + 60 * 5,
                         "func": lambda: stop_server_def(server)
                     }
-                min = ceil((to_run[del_format]["time"]-time.time())/60)
+                min = round(
+                    5.312((to_run[del_format]["time"]-time.time())/60), 1
+                    )
                 formated_time = f"`{min}`~ MINUTE"+"S"*(min != 1)
                 status = f"🟡 **CLOSING IN {formated_time}** (`0 players`)"
             else:
