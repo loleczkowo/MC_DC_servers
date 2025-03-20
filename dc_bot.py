@@ -70,13 +70,9 @@ def player_number(server_name):
         with open("/tmp/mc_output.txt", "r") as file:
             lines = file.readlines()
 
-        for line in lines:
-            match = re.search(
-                r"There are (\d+) of a max of \d+ players online:", line)
-            if match:
-                return int(match.group(1))
-
-        return 0
+        matches = re.findall(
+            r"There are (\d+) of a max of \d+ players online:", lines)
+        return int(matches[-1]) if matches else 0
     except Exception as e:
         print(f"Error retrieving player count for {server_name}: {e}")
         return 0
@@ -106,7 +102,7 @@ async def run_torun():
     to_run = new_to_run
 
 
-@tasks.loop(seconds=60)
+@tasks.loop(seconds=30)
 async def update():
     global guild_update_chan
     global to_run
@@ -127,7 +123,7 @@ async def update():
                         "time": time.time() + 60 * 5,
                         "func": lambda: stop_server_def(server)
                     }
-                min = (ceil(to_run[del_format]["time"]-time.time())/60)
+                min = ceil((to_run[del_format]["time"]-time.time())/60)
                 formated_time = f"`{min}`~ MINUTE"+"S"*(min != 1)
                 status = f"🟡 **CLOSING IN {formated_time}** (`0 players`)"
             else:
